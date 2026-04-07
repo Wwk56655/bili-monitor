@@ -8,26 +8,41 @@ jobs:
   run:
     runs-on: ubuntu-latest
     steps:
-      - name: 强制使用Node.js 24（消除警告）
+      - name: 强制Node.js 24（消除警告）
         run: echo "FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true" >> $GITHUB_ENV
-      - uses: actions/checkout@v4
+      
+      - name: 拉取代码
+        uses: actions/checkout@v4
+      
       - name: 初始化记录文件
-        run: echo '{"video": {}, "dynamic": {}, "comment": {}}' > last.json
+        run: |
+          if [ ! -f last.json ]; then
+            echo '{"video": {}, "dynamic": {}, "comment": {}}' > last.json
+          fi
+      
       - name: 设置Python环境
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
+      
       - name: 安装依赖
         run: pip install requests
+      
       - name: 运行监控脚本
         env:
           BILIBILI_UID: ${{ secrets.BILIBILI_UID }}
           SERVERCHAN_SENDKEY: ${{ secrets.SERVERCHAN_SENDKEY }}
         run: python main.py
-      - name: 保存最新记录
+      
+      - name: 保存最新记录（修复权限问题）
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add last.json
-          git commit -m "update last record [skip ci]" || exit 0
-          git push
+          # 无变更时不提交，避免报错
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "update last record [skip ci]"
+            git push
+          fi
