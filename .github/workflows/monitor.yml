@@ -1,4 +1,4 @@
-name: Bilibili Full Monitor
+name: Bilibili Monitor
 on:
   schedule:
     - cron: "*/5 * * * *"
@@ -8,41 +8,19 @@ jobs:
   run:
     runs-on: ubuntu-latest
     steps:
-      - name: 强制Node.js 24（消除警告）
-        run: echo "FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true" >> $GITHUB_ENV
-      
-      - name: 拉取代码
-        uses: actions/checkout@v4
-      
-      - name: 初始化记录文件
-        run: |
-          if [ ! -f last.json ]; then
-            echo '{"video": {}, "dynamic": {}, "comment": {}}' > last.json
-          fi
-      
-      - name: 设置Python环境
+      - uses: actions/checkout@v4
+      - name: Init file
+        run: echo '{"bvid":"","dynamic":""}' > last.json
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
-      
-      - name: 安装依赖
+      - name: Install requests
         run: pip install requests
-      
-      - name: 运行监控脚本
+      - name: Run
         env:
           BILIBILI_UID: ${{ secrets.BILIBILI_UID }}
           SERVERCHAN_SENDKEY: ${{ secrets.SERVERCHAN_SENDKEY }}
         run: python main.py
-      
-      - name: 保存最新记录（修复权限问题）
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add last.json
-          # 无变更时不提交，避免报错
-          if git diff --cached --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "update last record [skip ci]"
-            git push
-          fi
+      - name: Save
+        run: git config user.name bot; git config user.email bot@test.com; git add last.json; git commit -m update; git push || exit 0
