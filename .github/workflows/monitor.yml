@@ -1,15 +1,20 @@
-name: Bilibili Monitor
+name: Bilibili Full Monitor
 
 on:
   schedule:
     - cron: "*/5 * * * *"  # 每5分钟跑一次
-  workflow_dispatch:       # 允许手动运行
+  workflow_dispatch:       # 手动运行
 
 jobs:
   run:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: 恢复上次记录
+        run: |
+          if [ ! -f last_update.json ]; then
+            echo '{"last_video_bvid": "", "last_dynamic_id": "", "last_up_comment_id": ""}' > last_update.json
+          fi
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -21,3 +26,9 @@ jobs:
           BILIBILI_UP_UID: ${{ secrets.BILIBILI_UP_UID }}
           SERVERCHAN_SENDKEY: ${{ secrets.SERVERCHAN_SENDKEY }}
         run: python main.py
+      - name: 保存最新记录
+        uses: actions/upload-artifact@v4
+        with:
+          name: last_update
+          path: last_update.json
+          retention-days: 1
