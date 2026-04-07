@@ -9,18 +9,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Init file
-        run: echo '{"bvid":"","dynamic":""}' > last.json
+      
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
-      - name: Install requests
+      
+      - name: Install dependencies
         run: pip install requests
-      - name: Run
+      
+      - name: Run script
         env:
           BILIBILI_UID: ${{ secrets.BILIBILI_UID }}
           SERVERCHAN_SENDKEY: ${{ secrets.SERVERCHAN_SENDKEY }}
         run: python main.py
-      - name: Save
-        run: git config user.name bot; git config user.email bot@test.com; git add last.json; git commit -m update; git push || exit 0
