@@ -1,34 +1,33 @@
 name: Bilibili Full Monitor
-
 on:
   schedule:
-    - cron: "*/5 * * * *"  # 每5分钟跑一次
-  workflow_dispatch:       # 手动运行
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
 
 jobs:
   run:
     runs-on: ubuntu-latest
     steps:
+      - name: 强制使用Node.js 24（消除警告）
+        run: echo "FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true" >> $GITHUB_ENV
       - uses: actions/checkout@v4
-      - name: 恢复上次记录
-        run: |
-          if [ ! -f last_update.json ]; then
-            echo '{"last_video_bvid": "", "last_dynamic_id": "", "last_up_comment_id": ""}' > last_update.json
-          fi
-      - name: Set up Python
+      - name: 初始化记录文件
+        run: echo '{"video": {}, "dynamic": {}, "comment": {}}' > last.json
+      - name: 设置Python环境
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
-      - name: Install requests
+      - name: 安装依赖
         run: pip install requests
-      - name: Run monitor
+      - name: 运行监控脚本
         env:
-          BILIBILI_UP_UID: ${{ secrets.BILIBILI_UP_UID }}
+          BILIBILI_UID: ${{ secrets.BILIBILI_UID }}
           SERVERCHAN_SENDKEY: ${{ secrets.SERVERCHAN_SENDKEY }}
         run: python main.py
       - name: 保存最新记录
-        uses: actions/upload-artifact@v4
-        with:
-          name: last_update
-          path: last_update.json
-          retention-days: 1
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add last.json
+          git commit -m "update last record [skip ci]" || exit 0
+          git push
