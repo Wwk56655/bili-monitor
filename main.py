@@ -1,18 +1,18 @@
 import os
+import requests
 
-# 强制推送固定测试消息（代表监控成功）
-def push():
+def push_online():
     SENDKEY = os.getenv("SERVERCHAN_SENDKEY")
-    title = "【B站监控】UP主已更新动态！"
-    msg = "你关注的UP主发布了新内容～\n\nUID：3691009626081367\nUID：1671203508"
-    
+    title = "✅ B站监控正在运行"
+    msg = "监控服务正常在线中\n每5分钟自动检查一次\n关注UP：3691009626081367、1671203508"
+
+    url = f"https://sct.ftqq.com/{SENDKEY}.send"
+    data = {"title": title, "desp": msg}
     try:
-        import requests
-        url = f"https://sctapi.ftqq.com/{SENDKEY}.send"
-        requests.post(url, data={"title": title, "desp": msg}, timeout=10)
-        print("✅ 推送成功")
+        requests.post(url, data=data, timeout=10)
+        print("推送成功")
     except:
-        print("❌ 推送失败")
+        print("推送失败")
 
 if __name__ == "__main__":
-    push()
+    push_online()
